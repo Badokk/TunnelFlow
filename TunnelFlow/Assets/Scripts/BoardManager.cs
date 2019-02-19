@@ -19,7 +19,7 @@ public class BoardManager : MonoBehaviour {
 	public float fillFactorThreshold_;
 
 	[SerializeField]
-	[Range(1, 6)]
+	[Range(1, 9)]
 	public int noPlayers_;
 	[SerializeField]
 	[Range(1, 100)]
@@ -52,6 +52,8 @@ public class BoardManager : MonoBehaviour {
 
 	[SerializeField]
 	GameObject cubePrefab;
+	[SerializeField]
+	public Player [] player;
 	public Tile[,] board;
 	public static BoardManager instance_;
 	BoardDrawer drawer;
@@ -76,6 +78,8 @@ public class BoardManager : MonoBehaviour {
 			pause_ = !pause_;
 		if (Input.GetKeyDown ("r"))
 			Reset ();
+		if (Input.GetKeyDown ("s"))
+			SoftReset ();
 		if (Input.GetKeyDown ("l"))
 			drawer.ToggleLabels ();
 	}
@@ -85,6 +89,17 @@ public class BoardManager : MonoBehaviour {
 		drawer.teardown ();
 		board = new Tile[rows_, columns_];
 		FillCubeGrid ();
+		drawer.init (rows_, columns_, cubePrefab);
+	}
+
+	void SoftReset()
+	{
+		drawer.teardown ();
+		for (int i = 0; i < rows_; i++) {
+			for (int j = 0; j < columns_; j++) {
+				board [i, j].clear();
+			}
+		}
 		drawer.init (rows_, columns_, cubePrefab);
 	}
 
@@ -105,15 +120,15 @@ public class BoardManager : MonoBehaviour {
 
 	public void Cleeck(int x, int y)
 	{
-		board [x, y].addVolumeStart (2, 1000);
-		board [x, y].addVolumeFin (true);
+		//board [x, y].addVolumeStart (2, 1000);
+		//board [x, y].addVolumeFin (true);
 	}
 
 	void FillCubeGrid () {
 		//Random.InitState (0);
 		for (int i = 0; i < rows_; i++) {
 			for (int j = 0; j < columns_; j++) {
-				board [i, j] = new Tile (i, j, 0, Random.Range(0, 100) < wallChance_ ? 0 : tileCapacity_, false);
+				board [i, j] = new Tile (i, j, Player.neutral, Random.Range(0, 100) < wallChance_, false);
 			}
 		}
 
@@ -125,7 +140,7 @@ public class BoardManager : MonoBehaviour {
 				i--;
 				continue;
 			}
-			board [x, y] = new Tile (x, y, (i%noPlayers_)+1, wellCapacity_, true);
+			board [x, y] = new Tile (x, y, player[(i%noPlayers_)], false, true);
 		}
 		for (int i = 1; i < neutralWells_ + 1; i++) {
 			int x = Random.Range (0, rows_);
@@ -135,7 +150,7 @@ public class BoardManager : MonoBehaviour {
 				i--;
 				continue;
 			}
-			board [x, y] = new Tile (x, y, 0, wellCapacity_, true);
+			board [x, y] = new Tile (x, y, Player.neutral, false, true);
 		}
 	}
 
@@ -158,13 +173,29 @@ public class BoardManager : MonoBehaviour {
 
 	void ReinforceWells()
 	{
-		for(int i = 0; i < rows_; i++)
-		{
-			for(int j = 0; j < columns_; j++)
-			{
-				if (board[i,j].isSpawner_ && board[i,j].player_ != 0)
-				{
-					board [i, j].addVolumeStart (board [i, j].player_, wellIncome_);
+		for (int p = 0; p < noPlayers_; p++) {
+			player [p].turnsTillReinforcement_--;
+			if (player [p].turnsTillReinforcement_ < 0) {
+				player [p].turnsTillReinforcement_ = player [p].turnsBetweenReinforcements_;
+				for (int i = 0; i < rows_; i++) {
+					for (int j = 0; j < columns_; j++) {
+						if (board [i, j].isSpawner_ && board [i, j].player_ == player[p]) {
+							board [i, j].addVolumeStart (board [i, j].player_, player[p].wellIncome_);
+						}
+					}
+				}
+			}
+		}
+		Player.neutral.turnsTillReinforcement_--;
+		if (Player.neutral.turnsTillReinforcement_ < 0) {
+			Player.neutral.turnsTillReinforcement_ = Player.neutral.turnsBetweenReinforcements_;
+
+			//Debug.Log ("Neutral well increase");
+			for (int i = 0; i < rows_; i++) {
+				for (int j = 0; j < columns_; j++) {
+					if (board [i, j].isSpawner_ && board [i, j].player_ == Player.neutral) {
+						board [i, j].addVolumeStart (board [i, j].player_, Player.neutral.wellIncome_);
+					}
 				}
 			}
 		}
@@ -173,10 +204,8 @@ public class BoardManager : MonoBehaviour {
 
 	void PassTurn()
 	{
-		if (--turnsTillReinforcements_ < 0) {
-			turnsTillReinforcements_ = turnsBetweenReinforcements_;
-			ReinforceWells ();
-		}
+		//Debug.Log ("Pass turn");
+		ReinforceWells ();
 		for(int i = 0; i < rows_; i++)
 		{
 			for(int j = 0; j < columns_; j++)

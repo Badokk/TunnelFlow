@@ -42,7 +42,7 @@ public class Controls : MonoBehaviour {
 
 			if (Physics.Raycast (ray, out hit, 100)) {
 				TileIdentification tileIdHit = hit.collider.GetComponentInParent<TileIdentification>();
-				Debug.Log (tileIdHit.x_ + " " + tileIdHit.y_);
+				//Debug.Log (tileIdHit.x_ + " " + tileIdHit.y_);
 				manager.Cleeck(tileIdHit.x_, tileIdHit.y_);
 			}
 		}

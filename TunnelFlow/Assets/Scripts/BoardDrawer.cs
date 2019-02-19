@@ -85,24 +85,11 @@ public class BoardDrawer : MonoBehaviour
 			for (int j = 0; j < tiles_.GetLength (1); j++) {
 				float limit = tiles[i, j].limit_;
 				float volume = tiles[i, j].volume_;
-				float player = tiles[i, j].player_;
 
-				if (limit == 0)
+				if (tiles [i, j].isWall_)
 					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = Color.black;
-
-				if (player == 1)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1, 1 - (float)volume/limit, 1 - (float)volume/limit);
-				if (player == 2)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1 - (float)volume/limit, 1, 1 - (float)volume/limit);
-				if (player == 3)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1 - (float)volume/limit, 1 - (float)volume/limit, 1);
-				if (player == 4)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1 - (float)volume/limit, 1, 1);
-				if (player == 5)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1, 1 - (float)volume/limit, 1);
-				if (player == 6)
-					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = new Color(1, 1, 1 - (float)volume/limit);
-
+				else
+					tiles_ [i, j].GetComponent<MeshRenderer> ().material.color = Color.Lerp(tiles [i, j].player_.color_, Color.white, 0.8f-0.8f*(float)volume/limit);
 				if (viewLabels_) labels_[i, j].GetComponent<TextMesh>().text = "" + volume;
 			}
 		}
